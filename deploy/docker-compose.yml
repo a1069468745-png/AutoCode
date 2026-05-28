@@ -1,0 +1,257 @@
+name: ${COMPOSE_PROJECT_NAME}
+
+x-placeholder-service: &placeholder-service
+  build:
+    context: ./docker/service-placeholder
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$$SERVICE_PORT/healthz >/dev/null || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 10
+    start_period: 5s
+  networks:
+    - autocode-net
+
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Asia/Shanghai
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - autocode-net
+
+  redis:
+    image: ${REDIS_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME}-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    ports:
+      - "${REDIS_HOST_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - autocode-net
+
+  qdrant:
+    image: ${QDRANT_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME}-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_HTTP_PORT}:6333"
+      - "${QDRANT_GRPC_PORT}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - autocode-net
+
+  api-gateway:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-api-gateway
+    environment:
+      SERVICE_NAME: api-gateway
+      SERVICE_PORT: ${API_GATEWAY_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Unified API gateway placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    ports:
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+
+  project-service:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-project-service
+    environment:
+      SERVICE_NAME: project-service
+      SERVICE_PORT: ${PROJECT_SERVICE_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Project metadata placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${PROJECT_SERVICE_PORT}:${PROJECT_SERVICE_PORT}"
+
+  context-service:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-context-service
+    environment:
+      SERVICE_NAME: context-service
+      SERVICE_PORT: ${CONTEXT_SERVICE_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Query orchestration placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${CONTEXT_SERVICE_PORT}:${CONTEXT_SERVICE_PORT}"
+
+  codegraph-runner:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-codegraph-runner
+    environment:
+      SERVICE_NAME: codegraph-runner
+      SERVICE_PORT: ${CODEGRAPH_RUNNER_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Code graph indexing placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${CODEGRAPH_RUNNER_PORT}:${CODEGRAPH_RUNNER_PORT}"
+
+  history-indexer:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-history-indexer
+    environment:
+      SERVICE_NAME: history-indexer
+      SERVICE_PORT: ${HISTORY_INDEXER_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Git history indexing placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${HISTORY_INDEXER_PORT}:${HISTORY_INDEXER_PORT}"
+
+  knowledge-indexer:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-knowledge-indexer
+    environment:
+      SERVICE_NAME: knowledge-indexer
+      SERVICE_PORT: ${KNOWLEDGE_INDEXER_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Documentation indexing placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${KNOWLEDGE_INDEXER_PORT}:${KNOWLEDGE_INDEXER_PORT}"
+
+  llm-gateway:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-llm-gateway
+    environment:
+      SERVICE_NAME: llm-gateway
+      SERVICE_PORT: ${LLM_GATEWAY_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Model gateway placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    ports:
+      - "${LLM_GATEWAY_PORT}:${LLM_GATEWAY_PORT}"
+
+  dev-agent-service:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-dev-agent-service
+    environment:
+      SERVICE_NAME: dev-agent-service
+      SERVICE_PORT: ${DEV_AGENT_SERVICE_PORT}
+      SERVICE_ROLE: backend
+      SERVICE_DESCRIPTION: Intelligent analysis placeholder
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${DEV_AGENT_SERVICE_PORT}:${DEV_AGENT_SERVICE_PORT}"
+
+  web-console:
+    <<: *placeholder-service
+    container_name: ${COMPOSE_PROJECT_NAME}-web-console
+    environment:
+      SERVICE_NAME: web-console
+      SERVICE_PORT: ${WEB_CONSOLE_PORT}
+      SERVICE_ROLE: frontend
+      SERVICE_DESCRIPTION: Web console placeholder
+      API_BASE_PATH: /api
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    ports:
+      - "${WEB_CONSOLE_PORT}:${WEB_CONSOLE_PORT}"
+
+  nginx:
+    image: ${NGINX_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME}-nginx
+    restart: unless-stopped
+    environment:
+      WEB_CONSOLE_PORT: ${WEB_CONSOLE_PORT}
+      API_GATEWAY_PORT: ${API_GATEWAY_PORT}
+    ports:
+      - "${NGINX_HOST_PORT}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/templates:ro
+    depends_on:
+      web-console:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - autocode-net
+
+networks:
+  autocode-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:

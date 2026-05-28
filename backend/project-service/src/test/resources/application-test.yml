@@ -1,0 +1,11 @@
+spring:
+  jackson:
+    time-zone: UTC
+management:
+  endpoints:
+    enabled-by-default: false
+autocode:
+  project:
+    cache:
+      detail-ttl: PT30M
+      list-ttl: PT10M

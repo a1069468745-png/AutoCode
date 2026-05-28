@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoCode 基础组件入口</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Microsoft YaHei", sans-serif;
+        background: linear-gradient(135deg, #f5f7fa, #dbe7ff);
+        color: #1f2a44;
+      }
+
+      main {
+        max-width: 880px;
+        margin: 64px auto;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(31, 42, 68, 0.12);
+      }
+
+      h1 {
+        margin-top: 0;
+        font-size: 32px;
+      }
+
+      p {
+        line-height: 1.7;
+      }
+
+      code {
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: #edf3ff;
+      }
+
+      .card-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+
+      .card {
+        padding: 20px;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #d9e5ff;
+      }
+    </style>
+  </head>
+  <body data-page-marker="autocode-bootstrap-ready">
+    <main>
+      <h1>AutoCode 基础组件已就绪</h1>
+      <p>
+        当前页面由 <code>nginx</code> 提供，用于验证本地 Docker 基础设施已经启动。
+        后续 Java 服务和 Vue 前端接入后，这里会切换为统一入口。
+      </p>
+      <div class="card-list">
+        <section class="card">
+          <strong>PostgreSQL</strong>
+          <p>负责平台主数据库与初始化脚本验证。</p>
+        </section>
+        <section class="card">
+          <strong>Redis</strong>
+          <p>负责缓存、任务状态与会话级上下文基础能力。</p>
+        </section>
+        <section class="card">
+          <strong>Qdrant</strong>
+          <p>负责向量检索组件的部署预留与健康检查验证。</p>
+        </section>
+        <section class="card">
+          <strong>Nginx</strong>
+          <p>负责统一入口与后续反向代理占位。</p>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

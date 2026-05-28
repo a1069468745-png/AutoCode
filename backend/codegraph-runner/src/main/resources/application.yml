@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: codegraph-runner
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:autocode}
+    username: ${DB_USERNAME:autocode}
+    password: ${DB_PASSWORD:replace_me}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:replace_me}
+server:
+  port: ${CODEGRAPH_RUNNER_PORT:18083}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+logging:
+  level:
+    root: ${ROOT_LOG_LEVEL:INFO}
+    com.autocode: ${APP_LOG_LEVEL:INFO}
+autocode:
+  codegraph:
+    workspace-root: ${WORKSPACE_ROOT:./workspace/codegraph}
+    command-path: ${CODEGRAPH_COMMAND_PATH:./tools/codegraph/bin/codegraph}
+    command-timeout-seconds: ${CODEGRAPH_COMMAND_TIMEOUT_SECONDS:300}

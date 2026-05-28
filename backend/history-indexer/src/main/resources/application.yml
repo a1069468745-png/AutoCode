@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: history-indexer
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:autocode}
+    username: ${DB_USERNAME:autocode}
+    password: ${DB_PASSWORD:replace_me}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:replace_me}
+server:
+  port: ${HISTORY_INDEXER_PORT:18084}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+logging:
+  level:
+    root: ${ROOT_LOG_LEVEL:INFO}
+    com.autocode: ${APP_LOG_LEVEL:INFO}
+autocode:
+  history:
+    workspace-root: ${WORKSPACE_ROOT:./workspace/history}
+    git-command-path: ${GIT_COMMAND_PATH:./tools/git/bin/git}
+    default-branch: ${HISTORY_DEFAULT_BRANCH:main}
+    max-commit-window: ${HISTORY_MAX_COMMIT_WINDOW:200}
