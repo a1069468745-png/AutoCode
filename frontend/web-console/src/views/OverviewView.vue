@@ -11,18 +11,17 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 <template>
   <section class="overview-grid">
     <article class="hero-panel">
-      <p class="eyebrow">工程状态</p>
-      <h2>前端工程骨架已就绪</h2>
+      <p class="eyebrow">阶段目标</p>
+      <h2>IT-08 / IT-09 / IT-10 联调推进中</h2>
       <p class="hero-copy">
-        当前工程已经预留路由、全局状态和请求入口，后续可以直接进入项目管理、查询输入和权限菜单等页面开发。
+        当前控制台已接入项目管理与查询联调页面，可直接创建项目、切换当前项目并发起多类型查询。
       </p>
-
       <div class="hero-tags">
         <el-tag effect="plain">Vue 3</el-tag>
         <el-tag effect="plain">TypeScript</el-tag>
         <el-tag effect="plain">Element Plus</el-tag>
         <el-tag effect="plain">Pinia</el-tag>
-        <el-tag effect="plain">Vue Router</el-tag>
+        <el-tag effect="plain">Axios</el-tag>
       </div>
     </article>
 
@@ -36,19 +35,9 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
         <strong>{{ environment }}</strong>
       </div>
       <div class="status-item">
-        <span>默认 API Base</span>
+        <span>API Base</span>
         <strong>{{ apiBaseUrl }}</strong>
       </div>
-    </article>
-
-    <article class="checklist-panel">
-      <h3>已预留能力</h3>
-      <ul>
-        <li>布局容器与主导航骨架</li>
-        <li>路由入口与主页占位</li>
-        <li>Pinia 全局状态入口</li>
-        <li>Axios 请求实例与项目头透传预留</li>
-      </ul>
     </article>
   </section>
 </template>
@@ -61,8 +50,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 }
 
 .hero-panel,
-.status-panel,
-.checklist-panel {
+.status-panel {
   border: 1px solid rgba(180, 83, 9, 0.14);
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.72);
@@ -103,8 +91,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
   margin-top: 24px;
 }
 
-.status-panel,
-.checklist-panel {
+.status-panel {
   padding: 24px;
 }
 
@@ -114,8 +101,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
   border-top: 1px solid rgba(180, 83, 9, 0.12);
 }
 
-.status-item span,
-.checklist-panel h3 {
+.status-item span {
   color: #9a3412;
 }
 
@@ -126,28 +112,13 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
   color: #1f2937;
 }
 
-.checklist-panel {
-  grid-column: 1 / -1;
-}
-
-.checklist-panel ul {
-  margin: 16px 0 0;
-  padding-left: 20px;
-  color: #4b5563;
-}
-
-.checklist-panel li + li {
-  margin-top: 10px;
-}
-
 @media (max-width: 960px) {
   .overview-grid {
     grid-template-columns: 1fr;
   }
 
   .hero-panel,
-  .status-panel,
-  .checklist-panel {
+  .status-panel {
     padding: 20px;
   }
 

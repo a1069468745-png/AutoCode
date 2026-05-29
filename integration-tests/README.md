@@ -1,11 +1,14 @@
 # Integration Tests
 
 ## Scope
-- `IT-05` 查询接口联调契约（`context-service`）
-- `IT-06` 调用关系与历史综合聚合场景（`context-service`）
-- `IT-07` 需求追溯聚合场景（`context-service`）
-- `PS-03` 项目成员权限映射（`project-service`）
-- `GW-03` 项目级查询授权拦截（`api-gateway`）
+- `IT-05` query endpoint integration contract (`context-service`)
+- `IT-06` call relation + history aggregation scenario (`context-service`)
+- `IT-07` requirement traceability aggregation scenario (`context-service`)
+- `PS-03` project member access mapping (`project-service`)
+- `GW-03` project-level query authorization (`api-gateway`)
+- `IT-08` project-management frontend integration gate (`web-console build`)
+- `IT-09` query frontend integration gate (`web-console build`)
+- `IT-10` phase-1 integrated smoke gate (single script)
 
 ## Run
 ```powershell
@@ -13,5 +16,5 @@
 ```
 
 ## Notes
-- The script runs module-level tests in a fixed order and stops on first failure.
-- Each module test already includes endpoint-level assertions for the covered integration scope.
+- The script runs module checks in a fixed order and stops on first failure.
+- Frontend build is included to ensure project/query integration pages pass type-check and bundling gates.

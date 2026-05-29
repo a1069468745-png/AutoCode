@@ -1,12 +1,37 @@
 <script setup lang="ts">
 import { DataLine, Document, FolderOpened, Link } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-const menuItems = [
-  { key: 'overview', label: '平台概览', icon: DataLine },
-  { key: 'projects', label: '项目接入', icon: FolderOpened },
-  { key: 'queries', label: '分析查询', icon: Link },
+type MenuItem = {
+  key: string
+  label: string
+  icon: unknown
+  routeName?: string
+}
+
+const menuItems: MenuItem[] = [
+  { key: 'overview', label: '平台概览', icon: DataLine, routeName: 'overview' },
+  { key: 'projects', label: '项目管理', icon: FolderOpened, routeName: 'projects' },
+  { key: 'queries', label: '查询联调', icon: Link, routeName: 'queries' },
   { key: 'knowledge', label: '知识回溯', icon: Document },
 ]
+
+const router = useRouter()
+const route = useRoute()
+
+const activeMenu = computed(() => {
+  const active = menuItems.find((item) => item.routeName === route.name)
+  return active?.key ?? 'overview'
+})
+
+function handleMenuSelect(key: string) {
+  const target = menuItems.find((item) => item.key === key)
+  if (!target?.routeName) {
+    return
+  }
+  router.push({ name: target.routeName })
+}
 </script>
 
 <template>
@@ -15,10 +40,10 @@ const menuItems = [
       <div class="brand-block">
         <p class="brand-mark">AutoCode</p>
         <h1>Web Console</h1>
-        <span>INF-03 工程骨架</span>
+        <span>一期联调</span>
       </div>
 
-      <el-menu class="shell-menu" default-active="overview">
+      <el-menu class="shell-menu" :default-active="activeMenu" @select="handleMenuSelect">
         <el-menu-item v-for="item in menuItems" :key="item.key" :index="item.key">
           <el-icon><component :is="item.icon" /></el-icon>
           <span>{{ item.label }}</span>
@@ -30,9 +55,9 @@ const menuItems = [
       <el-header class="shell-header">
         <div>
           <p class="header-label">当前阶段</p>
-          <strong>基础设施与工程骨架模块</strong>
+          <strong>项目与查询联调推进</strong>
         </div>
-        <el-tag type="warning" effect="dark">准备进入 FE-01</el-tag>
+        <el-tag type="warning" effect="dark">IT-08 / IT-09 / IT-10</el-tag>
       </el-header>
 
       <el-main class="shell-main">

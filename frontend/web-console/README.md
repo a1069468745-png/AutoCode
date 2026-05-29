@@ -1,5 +1,22 @@
-# Vue 3 + TypeScript + Vite
+# Web Console
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## Current MVP pages
+- `overview`: current phase and runtime snapshot
+- `projects`: create project, list projects, set active project
+- `queries`: run code/history/knowledge/impact/traceability queries
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## Environment variables
+- `VITE_API_BASE_URL` (default `/api`)
+- `VITE_REQUEST_TIMEOUT` (default `10000`)
+- `VITE_APP_TITLE` (default `AutoCode Web Console`)
+
+## Local run
+```powershell
+pnpm install
+pnpm dev
+```
+
+## Build gate
+```powershell
+pnpm build
+```
