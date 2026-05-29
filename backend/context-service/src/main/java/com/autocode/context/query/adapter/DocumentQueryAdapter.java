@@ -38,6 +38,7 @@ public class DocumentQueryAdapter implements ContextQueryAdapter {
         if (request == null || request.projectId() == null) {
             return StandardQueryResult.error("projectId is required");
         }
+        // Documents and links are queried independently so one source failure can degrade to PARTIAL.
         int limit = extractLimit(request);
         Map<String, Object> params = Map.of("projectId", request.projectId(), "limit", limit);
         List<StandardQueryHit> hits = new ArrayList<>();
@@ -73,6 +74,7 @@ public class DocumentQueryAdapter implements ContextQueryAdapter {
         } catch (RuntimeException ex) {
             linkFailed = true;
         }
+        // Shared result-state contract with other adapters: ERROR > EMPTY > PARTIAL > SUCCESS.
         if (docFailed && linkFailed) {
             return StandardQueryResult.error("document query failed");
         }

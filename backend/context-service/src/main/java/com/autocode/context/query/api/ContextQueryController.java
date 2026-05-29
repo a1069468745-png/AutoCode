@@ -35,6 +35,7 @@ public class ContextQueryController {
 
     @PostMapping("/ask")
     public ApiResponse<QueryResponsePayload> ask(@RequestBody ContextQueryRequest request) {
+        // Generic ask route delegates intent detection to QueryIntentResolver.
         return ApiResponse.ok("query executed", queryOrchestrationService.execute(request, null));
     }
 }

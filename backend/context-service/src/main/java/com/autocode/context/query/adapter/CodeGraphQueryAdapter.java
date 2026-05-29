@@ -39,6 +39,7 @@ public class CodeGraphQueryAdapter implements ContextQueryAdapter {
         if (request == null || request.projectId() == null) {
             return StandardQueryResult.error("projectId is required");
         }
+        // One logical query fans out to symbol and edge sources, then merges into one hit list.
         int limit = extractLimit(request);
         String keyword = "%" + normalize(request.queryText()) + "%";
         Map<String, Object> params = Map.of("projectId", request.projectId(), "keyword", keyword, "limit", limit);
@@ -75,6 +76,7 @@ public class CodeGraphQueryAdapter implements ContextQueryAdapter {
         } catch (RuntimeException ex) {
             edgeFailed = true;
         }
+        // Standardized status mapping keeps EMPTY/PARTIAL/ERROR semantics consistent across adapters.
         if (symbolFailed && edgeFailed) {
             return StandardQueryResult.error("code graph query failed");
         }

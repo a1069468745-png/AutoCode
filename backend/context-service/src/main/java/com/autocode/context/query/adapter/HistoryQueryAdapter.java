@@ -35,6 +35,7 @@ public class HistoryQueryAdapter implements ContextQueryAdapter {
             return StandardQueryResult.error("projectId is required");
         }
         try {
+            // History query normalizes commit + symbol linkage into a source-agnostic hit model.
             int limit = extractLimit(request);
             List<Map<String, Object>> rows = queryExecutor.queryForList(HISTORY_SQL, Map.of(
                     "projectId", request.projectId(),

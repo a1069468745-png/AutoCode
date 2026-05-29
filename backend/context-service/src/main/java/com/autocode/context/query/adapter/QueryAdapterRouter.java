@@ -15,6 +15,7 @@ public class QueryAdapterRouter {
     }
 
     public StandardQueryResult route(QueryIntent intent, ContextQueryRequest request) {
+        // Adapter selection is intent-driven to keep each data source isolated by responsibility.
         for (ContextQueryAdapter adapter : adapters) {
             if (adapter.supports(intent)) {
                 return adapter.query(request);

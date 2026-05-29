@@ -10,6 +10,7 @@ import java.util.Map;
 public class QueryIntentResolver {
     private static final QueryIntent DEFAULT_FALLBACK_INTENT = QueryIntent.CODE_LOCATE;
 
+    // Use insertion order as matching priority to resolve ambiguous natural-language queries.
     private static final Map<QueryIntent, String[]> INTENT_KEYWORDS = new LinkedHashMap<>();
 
     static {
@@ -34,6 +35,7 @@ public class QueryIntentResolver {
         if (request == null) {
             return fallback("request is null");
         }
+        // Explicit client intent always wins over keyword inference.
         if (request.preferredIntent() != null && request.preferredIntent() != QueryIntent.UNKNOWN) {
             return new IntentDetectionResult(request.preferredIntent(), "preferred intent from request");
         }
@@ -41,6 +43,7 @@ public class QueryIntentResolver {
         if (normalizedText.isEmpty()) {
             return fallback("query text is empty");
         }
+        // First-match policy keeps routing deterministic and easy to debug.
         for (Map.Entry<QueryIntent, String[]> entry : INTENT_KEYWORDS.entrySet()) {
             for (String keyword : entry.getValue()) {
                 if (normalizedText.contains(keyword)) {

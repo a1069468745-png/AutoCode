@@ -16,9 +16,11 @@ public class QueryOrchestrationService {
 
     public QueryResponsePayload execute(ContextQueryRequest request, QueryIntent forcedIntent) {
         QueryIntent intent = forcedIntent;
+        // /ask endpoint depends on intent inference, while typed endpoints force fixed intents.
         if (intent == null) {
             intent = queryIntentResolver.resolve(request).intent();
         }
+        // All downstream adapters return the same result envelope for stable API behavior.
         return new QueryResponsePayload(intent, queryAdapterRouter.route(intent, request));
     }
 }
