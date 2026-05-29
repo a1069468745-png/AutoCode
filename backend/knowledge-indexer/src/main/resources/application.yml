@@ -18,8 +18,18 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level %logger{36} [%X{traceId:-}] - %msg%n"
   level:
     root: ${ROOT_LOG_LEVEL:INFO}
     com.autocode: ${APP_LOG_LEVEL:INFO}

@@ -18,11 +18,45 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level %logger{36} [%X{traceId:-}] - %msg%n"
   level:
     root: ${ROOT_LOG_LEVEL:INFO}
     com.autocode: ${APP_LOG_LEVEL:INFO}
 autocode:
   gateway:
     dev-token: ${API_GATEWAY_DEV_TOKEN:dev-token}
+    auth:
+      jwt-secret: ${API_GATEWAY_JWT_SECRET:autocode-dev-secret-key-2026}
+      jwt-expiration-seconds: ${API_GATEWAY_JWT_EXPIRY:86400}
+      local-users:
+        - username: admin
+          password: ${API_GATEWAY_ADMIN_PASSWORD:admin123}
+          user-id: admin-001
+          roles:
+            - ROLE_ADMIN
+            - ROLE_USER
+        - username: developer
+          password: ${API_GATEWAY_DEV_PASSWORD:dev123}
+          user-id: dev-001
+          roles:
+            - ROLE_USER
+    rate-limit:
+      enabled: ${API_GATEWAY_RATE_LIMIT_ENABLED:true}
+      rules:
+        "/api/query/":
+          permits-per-second: 10
+          burst-size: 20
+        "/v1/chat/":
+          permits-per-second: 5
+          burst-size: 10

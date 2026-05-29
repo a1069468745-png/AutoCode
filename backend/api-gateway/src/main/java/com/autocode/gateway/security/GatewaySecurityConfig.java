@@ -1,5 +1,6 @@
 package com.autocode.gateway.security;
 
+import com.autocode.gateway.audit.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,13 +17,16 @@ public class GatewaySecurityConfig {
     private final GatewayAuthenticationEntryPoint authenticationEntryPoint;
     private final DevBearerAuthenticationFilter devBearerAuthenticationFilter;
     private final ProjectPermissionFilter projectPermissionFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     public GatewaySecurityConfig(GatewayAuthenticationEntryPoint authenticationEntryPoint,
                                  DevBearerAuthenticationFilter devBearerAuthenticationFilter,
-                                 ProjectPermissionFilter projectPermissionFilter) {
+                                 ProjectPermissionFilter projectPermissionFilter,
+                                 RateLimitFilter rateLimitFilter) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.devBearerAuthenticationFilter = devBearerAuthenticationFilter;
         this.projectPermissionFilter = projectPermissionFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -35,9 +39,11 @@ public class GatewaySecurityConfig {
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/healthz", "/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(devBearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(projectPermissionFilter, DevBearerAuthenticationFilter.class);
 
