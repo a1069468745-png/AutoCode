@@ -18,3 +18,7 @@
 ## Notes
 - The script runs module checks in a fixed order and stops on first failure.
 - Frontend build is included to ensure project/query integration pages pass type-check and bundling gates.
+- Real browser verification now also depends on the local PostgreSQL schema being initialized with
+  `deploy/postgres/init/002_schema.sql` and `deploy/postgres/init/003_index.sql`.
+- After schema init, use `POST /api/projects/{id}/sync-indexes` or the `Sync indexes` button in the
+  web console to populate real code, history, and document index data for the current workspace.

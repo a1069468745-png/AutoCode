@@ -1,6 +1,7 @@
 package com.autocode.project.web;
 
 import com.autocode.project.service.ProjectNameConflictException;
+import com.autocode.project.service.ProjectIndexSyncException;
 import com.autocode.project.service.ProjectNotFoundException;
 import com.autocode.project.web.dto.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +34,12 @@ public class ProjectExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiErrorResponse handleProjectNameConflict(ProjectNameConflictException exception, HttpServletRequest request) {
         return error("PROJECT_NAME_CONFLICT", exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(ProjectIndexSyncException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleProjectIndexSync(ProjectIndexSyncException exception, HttpServletRequest request) {
+        return error("PROJECT_INDEX_SYNC_ERROR", exception.getMessage(), request);
     }
 
     private ApiErrorResponse error(String code, String message, HttpServletRequest request) {

@@ -28,3 +28,9 @@ autocode:
     cache:
       detail-ttl: ${PROJECT_CACHE_DETAIL_TTL:PT30M}
       list-ttl: ${PROJECT_CACHE_LIST_TTL:PT10M}
+    index:
+      default-workspace-root: ${AUTOCODE_DEFAULT_WORKSPACE_ROOT:}
+      excluded-directories: ${AUTOCODE_INDEX_EXCLUDED_DIRECTORIES:.git,node_modules,target,dist,.worktrees,.codex-logs}
+      max-source-files: ${AUTOCODE_INDEX_MAX_SOURCE_FILES:1500}
+      max-documents: ${AUTOCODE_INDEX_MAX_DOCUMENTS:400}
+      max-commits: ${AUTOCODE_INDEX_MAX_COMMITS:80}

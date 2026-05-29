@@ -79,6 +79,18 @@ public class ProjectRepository {
                 .optional();
     }
 
+    public void updateStatus(long id, String status) {
+        jdbcClient.sql("""
+                update app.projects
+                set status = :status,
+                    updated_at = now()
+                where id = :id
+                """)
+                .param("id", id)
+                .param("status", status)
+                .update();
+    }
+
     private ProjectRecord mapRecord(ResultSet resultSet, int rowNum) throws SQLException {
         return new ProjectRecord(
                 resultSet.getLong("id"),

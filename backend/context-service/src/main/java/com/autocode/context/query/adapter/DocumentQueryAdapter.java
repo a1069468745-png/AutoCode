@@ -11,14 +11,32 @@ import java.util.Map;
 @Component
 public class DocumentQueryAdapter implements ContextQueryAdapter {
     private static final String DOCUMENT_SQL = """
-            select doc_id, title, content_excerpt, doc_type
-            from documents
+            select
+                d.id as doc_id,
+                d.title,
+                coalesce(d.metadata_json ->> 'excerpt', d.doc_path) as content_excerpt,
+                d.doc_type
+            from app.documents d
             where project_id = :projectId
+              and (
+                  lower(d.title) like :keyword
+                  or lower(d.doc_path) like :keyword
+                  or lower(coalesce(d.metadata_json ->> 'excerpt', '')) like :keyword
+                  or :keyword = '%%'
+              )
             limit :limit
             """;
     private static final String LINK_SQL = """
-            select link_id, doc_id, target_type, target_id
-            from document_links
+            select
+                dl.id as link_id,
+                dl.document_id as doc_id,
+                case
+                    when dl.symbol_id is not null then 'SYMBOL'
+                    when dl.commit_id is not null then 'COMMIT'
+                    else 'REQUIREMENT'
+                end as target_type,
+                coalesce(cast(dl.symbol_id as text), cast(dl.commit_id as text), cast(dl.requirement_id as text)) as target_id
+            from app.document_links dl
             where project_id = :projectId
             limit :limit
             """;
@@ -40,7 +58,11 @@ public class DocumentQueryAdapter implements ContextQueryAdapter {
         }
         // Documents and links are queried independently so one source failure can degrade to PARTIAL.
         int limit = extractLimit(request);
-        Map<String, Object> params = Map.of("projectId", request.projectId(), "limit", limit);
+        Map<String, Object> params = Map.of(
+                "projectId", request.projectId(),
+                "keyword", "%" + normalize(request.queryText()) + "%",
+                "limit", limit
+        );
         List<StandardQueryHit> hits = new ArrayList<>();
         boolean docFailed = false;
         boolean linkFailed = false;
@@ -49,11 +71,11 @@ public class DocumentQueryAdapter implements ContextQueryAdapter {
             for (Map<String, Object> row : rows) {
                 hits.add(new StandardQueryHit(
                         QuerySourceType.DOCUMENT,
-                        value(row.get("doc_id")),
-                        value(row.get("title")),
-                        value(row.get("content_excerpt")),
+                        value(row, "doc_id", "id"),
+                        value(row, "title"),
+                        excerpt(row),
                         1.0d,
-                        Map.of("docType", value(row.get("doc_type")))
+                        Map.of("docType", value(row, "doc_type"))
                 ));
             }
         } catch (RuntimeException ex) {
@@ -64,11 +86,11 @@ public class DocumentQueryAdapter implements ContextQueryAdapter {
             for (Map<String, Object> row : rows) {
                 hits.add(new StandardQueryHit(
                         QuerySourceType.DOCUMENT,
-                        value(row.get("link_id")),
-                        "link:" + value(row.get("target_type")),
-                        value(row.get("doc_id")) + " -> " + value(row.get("target_id")),
+                        value(row, "link_id", "id"),
+                        "link:" + value(row, "target_type"),
+                        value(row, "doc_id", "document_id") + " -> " + value(row, "target_id", "symbol_id", "commit_id", "requirement_id"),
                         0.8d,
-                        Map.of("targetType", value(row.get("target_type")))
+                        Map.of("targetType", value(row, "target_type"))
                 ));
             }
         } catch (RuntimeException ex) {
@@ -96,7 +118,28 @@ public class DocumentQueryAdapter implements ContextQueryAdapter {
         return 20;
     }
 
-    private String value(Object value) {
-        return value == null ? "" : String.valueOf(value);
+    private String normalize(String text) {
+        return text == null ? "" : text.trim().toLowerCase();
+    }
+
+    private String excerpt(Map<String, Object> row) {
+        Object metadata = row.get("metadata_json");
+        if (metadata instanceof Map<?, ?> metadataMap) {
+            Object excerpt = metadataMap.get("excerpt");
+            if (excerpt != null) {
+                return String.valueOf(excerpt);
+            }
+        }
+        return value(row, "content_excerpt", "doc_path");
+    }
+
+    private String value(Map<String, Object> row, String... keys) {
+        for (String key : keys) {
+            Object value = row.get(key);
+            if (value != null) {
+                return String.valueOf(value);
+            }
+        }
+        return "";
     }
 }

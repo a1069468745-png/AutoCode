@@ -11,16 +11,25 @@ import java.util.Map;
 @Component
 public class CodeGraphQueryAdapter implements ContextQueryAdapter {
     private static final String SYMBOL_SQL = """
-            select symbol_id, name, kind, file_path
-            from symbols
+            select id as symbol_id, symbol_name as name, symbol_kind as kind, file_path
+            from app.symbols
             where project_id = :projectId
-              and lower(name) like :keyword
+              and (
+                  lower(symbol_name) like :keyword
+                  or lower(file_path) like :keyword
+              )
             limit :limit
             """;
     private static final String EDGE_SQL = """
-            select edge_id, src_symbol_id, dst_symbol_id, edge_type
-            from symbol_edges
-            where project_id = :projectId
+            select
+                se.id as edge_id,
+                coalesce(src.symbol_name, cast(se.source_symbol_id as text)) as src_symbol_id,
+                coalesce(dst.symbol_name, cast(se.target_symbol_id as text)) as dst_symbol_id,
+                se.edge_type
+            from app.symbol_edges se
+            left join app.symbols src on src.id = se.source_symbol_id
+            left join app.symbols dst on dst.id = se.target_symbol_id
+            where se.project_id = :projectId
             limit :limit
             """;
     private final SqlQueryExecutor queryExecutor;
@@ -51,11 +60,11 @@ public class CodeGraphQueryAdapter implements ContextQueryAdapter {
             for (Map<String, Object> row : rows) {
                 hits.add(new StandardQueryHit(
                         QuerySourceType.CODE_GRAPH,
-                        value(row.get("symbol_id")),
-                        value(row.get("name")),
-                        value(row.get("file_path")),
+                        value(row, "symbol_id", "id"),
+                        value(row, "name", "symbol_name"),
+                        value(row, "file_path"),
                         1.0d,
-                        Map.of("kind", value(row.get("kind")))
+                        Map.of("kind", value(row, "kind", "symbol_kind"))
                 ));
             }
         } catch (RuntimeException ex) {
@@ -66,11 +75,11 @@ public class CodeGraphQueryAdapter implements ContextQueryAdapter {
             for (Map<String, Object> row : rows) {
                 hits.add(new StandardQueryHit(
                         QuerySourceType.CODE_GRAPH,
-                        value(row.get("edge_id")),
-                        "edge:" + value(row.get("edge_type")),
-                        value(row.get("src_symbol_id")) + " -> " + value(row.get("dst_symbol_id")),
+                        value(row, "edge_id", "id"),
+                        "edge:" + value(row, "edge_type"),
+                        value(row, "src_symbol_id", "source_symbol_id") + " -> " + value(row, "dst_symbol_id", "target_symbol_id"),
                         0.8d,
-                        Map.of("edgeType", value(row.get("edge_type")))
+                        Map.of("edgeType", value(row, "edge_type"))
                 ));
             }
         } catch (RuntimeException ex) {
@@ -102,7 +111,13 @@ public class CodeGraphQueryAdapter implements ContextQueryAdapter {
         return text == null ? "" : text.trim().toLowerCase();
     }
 
-    private String value(Object value) {
-        return value == null ? "" : String.valueOf(value);
+    private String value(Map<String, Object> row, String... keys) {
+        for (String key : keys) {
+            Object value = row.get(key);
+            if (value != null) {
+                return String.valueOf(value);
+            }
+        }
+        return "";
     }
 }

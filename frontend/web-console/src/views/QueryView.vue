@@ -10,7 +10,8 @@ const loading = ref(false)
 const hits = ref<QueryHit[]>([])
 const resolvedIntent = ref('')
 const cacheHit = ref(false)
-const confidence = ref(0)
+const status = ref('')
+const resultMessage = ref('')
 
 const form = reactive({
   intent: 'CODE_LOCATE' as QueryIntent,
@@ -18,32 +19,38 @@ const form = reactive({
 })
 
 const intentOptions = [
-  { value: 'CODE_LOCATE', label: '代码定位' },
-  { value: 'HISTORY_TRACE', label: '历史追溯' },
-  { value: 'DOCUMENT_TRACE', label: '文档回溯' },
-  { value: 'CALL_RELATION', label: '影响分析' },
-  { value: 'REQUIREMENT_ANALYSIS', label: '需求追溯' },
+  { value: 'CODE_LOCATE', label: 'Code locate' },
+  { value: 'HISTORY_TRACE', label: 'History trace' },
+  { value: 'DOCUMENT_TRACE', label: 'Document trace' },
+  { value: 'CALL_RELATION', label: 'Impact analysis' },
+  { value: 'REQUIREMENT_ANALYSIS', label: 'Requirement traceability' },
 ]
 
 const hasProject = computed(() => Boolean(appStore.activeProjectId))
 
 async function submitQuery() {
   if (!hasProject.value) {
-    ElMessage.warning('请先在项目管理页设置当前项目')
+    ElMessage.warning('Please set an active project first.')
     return
   }
   if (!form.question.trim()) {
-    ElMessage.warning('请输入查询问题')
+    ElMessage.warning('Please enter a natural-language question.')
     return
   }
 
   loading.value = true
   try {
-    const response = await runQuery(form.intent, { question: form.question.trim() })
-    hits.value = response.hits
+    const response = await runQuery(form.intent, {
+      projectId: Number(appStore.activeProjectId),
+      queryText: form.question.trim(),
+      preferredIntent: form.intent,
+      options: {},
+    })
+    hits.value = response.result.hits
     resolvedIntent.value = response.intent
     cacheHit.value = response.cacheHit
-    confidence.value = response.confidence
+    status.value = response.result.status
+    resultMessage.value = response.result.message
   } finally {
     loading.value = false
   }
@@ -53,32 +60,38 @@ async function submitQuery() {
 <template>
   <section class="query-grid">
     <article class="panel">
-      <h2>查询请求</h2>
+      <h2>Query Request</h2>
       <el-form label-position="top">
-        <el-form-item label="查询类型">
+        <el-form-item label="Intent">
           <el-select v-model="form.intent" class="full-width">
             <el-option v-for="item in intentOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="自然语言问题">
-          <el-input v-model="form.question" type="textarea" :rows="5" placeholder="例如：payment 模块退款入口函数在哪里？" />
+        <el-form-item label="Natural-language question">
+          <el-input
+            v-model="form.question"
+            type="textarea"
+            :rows="5"
+            placeholder="Where is the refund entry point in the payment module?"
+          />
         </el-form-item>
-        <el-button type="primary" :loading="loading" @click="submitQuery">执行查询</el-button>
+        <el-button type="primary" :loading="loading" @click="submitQuery">Run query</el-button>
       </el-form>
-      <p class="tips">当前项目：{{ appStore.activeProjectName }}</p>
+      <p class="tips">Active project: {{ appStore.activeProjectName }}</p>
     </article>
 
     <article class="panel">
-      <h2>查询结果</h2>
+      <h2>Query Result</h2>
       <p class="meta" v-if="resolvedIntent">
-        路由意图 {{ resolvedIntent }}，置信度 {{ confidence.toFixed(2) }}，缓存命中 {{ cacheHit ? '是' : '否' }}
+        Routed intent {{ resolvedIntent }}, status {{ status }}, cache hit {{ cacheHit ? 'yes' : 'no' }}
       </p>
-      <el-empty v-if="!hits.length && !loading" description="暂无结果" />
+      <p class="meta" v-if="resultMessage">{{ resultMessage }}</p>
+      <el-empty v-if="!hits.length && !loading" description="No results yet." />
       <el-table v-else :data="hits" v-loading="loading">
-        <el-table-column prop="sourceType" label="来源" width="140" />
-        <el-table-column prop="title" label="标题" min-width="220" />
-        <el-table-column prop="excerpt" label="摘要" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="score" label="分数" width="100" />
+        <el-table-column prop="sourceType" label="Source" width="140" />
+        <el-table-column prop="title" label="Title" min-width="220" />
+        <el-table-column prop="excerpt" label="Excerpt" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="score" label="Score" width="100" />
       </el-table>
     </article>
   </section>

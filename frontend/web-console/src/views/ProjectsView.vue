@@ -2,19 +2,20 @@
 import { ElMessage } from 'element-plus'
 import { onMounted, reactive, ref } from 'vue'
 
-import { createProject, listProjects, type ProjectSummary } from '@/api/project'
+import { createProject, listProjects, syncProjectIndexes, type ProjectSummary } from '@/api/project'
 import { useAppStore } from '@/stores/app'
 
 const appStore = useAppStore()
 const loading = ref(false)
+const syncingProjectId = ref<number | null>(null)
 const projects = ref<ProjectSummary[]>([])
 
 const form = reactive({
   name: '',
-  repositoryUrl: '',
+  repoUrl: '',
   defaultBranch: 'main',
   docRepoPath: '',
-  techStackText: 'java,spring-boot,vue',
+  languageStack: 'java,spring-boot,vue',
 })
 
 async function refreshProjects() {
@@ -27,28 +28,22 @@ async function refreshProjects() {
 }
 
 async function submitCreateProject() {
-  if (!form.name || !form.repositoryUrl || !form.defaultBranch) {
-    ElMessage.warning('请先填写完整项目信息')
+  if (!form.name || !form.repoUrl || !form.defaultBranch) {
+    ElMessage.warning('Please complete the project information first.')
     return
   }
 
   loading.value = true
   try {
-    // Normalize comma-separated stack input into backend expected array.
-    const techStack = form.techStackText
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean)
-
     await createProject({
       name: form.name,
-      repositoryUrl: form.repositoryUrl,
+      repoUrl: form.repoUrl,
       defaultBranch: form.defaultBranch,
       docRepoPath: form.docRepoPath || null,
-      techStack,
+      languageStack: form.languageStack || null,
     })
 
-    ElMessage.success('项目已创建')
+    ElMessage.success('Project created successfully.')
     await refreshProjects()
   } finally {
     loading.value = false
@@ -56,9 +51,22 @@ async function submitCreateProject() {
 }
 
 function activateProject(project: ProjectSummary) {
-  // Persist selected project id for gateway X-Project-Id enforcement.
+  // Persist the selected project so query requests keep the same scope header.
   appStore.setActiveProject(String(project.id), project.name)
-  ElMessage.success(`已切换到项目 ${project.name}`)
+  ElMessage.success(`Active project set to ${project.name}.`)
+}
+
+async function syncIndexes(project: ProjectSummary) {
+  syncingProjectId.value = project.id
+  try {
+    const result = await syncProjectIndexes(project.id, {})
+    ElMessage.success(
+      `Synced ${result.symbolCount} symbols, ${result.commitCount} commits, and ${result.documentCount} documents.`,
+    )
+    await refreshProjects()
+  } finally {
+    syncingProjectId.value = null
+  }
 }
 
 onMounted(async () => {
@@ -69,37 +77,45 @@ onMounted(async () => {
 <template>
   <section class="projects-grid">
     <article class="panel">
-      <h2>创建项目</h2>
+      <h2>Create Project</h2>
       <el-form label-position="top">
-        <el-form-item label="项目名">
-          <el-input v-model="form.name" placeholder="例如：AutoCode" />
+        <el-form-item label="Project name">
+          <el-input v-model="form.name" placeholder="AutoCode" />
         </el-form-item>
-        <el-form-item label="仓库地址">
-          <el-input v-model="form.repositoryUrl" placeholder="https://git.example.com/team/repo.git" />
+        <el-form-item label="Repository URL">
+          <el-input v-model="form.repoUrl" placeholder="https://git.example.com/team/repo.git" />
         </el-form-item>
-        <el-form-item label="默认分支">
+        <el-form-item label="Default branch">
           <el-input v-model="form.defaultBranch" placeholder="main" />
         </el-form-item>
-        <el-form-item label="文档仓路径">
+        <el-form-item label="Document repository path">
           <el-input v-model="form.docRepoPath" placeholder="docs/specs" />
         </el-form-item>
-        <el-form-item label="技术栈（逗号分隔）">
-          <el-input v-model="form.techStackText" />
+        <el-form-item label="Language stack">
+          <el-input v-model="form.languageStack" placeholder="java,spring-boot,vue" />
         </el-form-item>
-        <el-button type="primary" :loading="loading" @click="submitCreateProject">创建并刷新</el-button>
+        <el-button type="primary" :loading="loading" @click="submitCreateProject">Create and refresh</el-button>
       </el-form>
     </article>
 
     <article class="panel">
-      <h2>项目列表</h2>
-      <el-table :data="projects" v-loading="loading" empty-text="暂无项目">
+      <h2>Project List</h2>
+      <el-table :data="projects" v-loading="loading" empty-text="No project records yet.">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="项目名" min-width="180" />
-        <el-table-column prop="defaultBranch" label="分支" width="120" />
-        <el-table-column prop="status" label="状态" width="120" />
-        <el-table-column label="操作" width="160">
+        <el-table-column prop="name" label="Project" min-width="180" />
+        <el-table-column prop="defaultBranch" label="Branch" width="120" />
+        <el-table-column prop="status" label="Status" width="120" />
+        <el-table-column label="Action" width="220">
           <template #default="scope">
-            <el-button link type="primary" @click="activateProject(scope.row)">设为当前</el-button>
+            <el-button link type="primary" @click="activateProject(scope.row)">Set active</el-button>
+            <el-button
+              link
+              type="success"
+              :loading="syncingProjectId === scope.row.id"
+              @click="syncIndexes(scope.row)"
+            >
+              Sync indexes
+            </el-button>
           </template>
         </el-table-column>
       </el-table>

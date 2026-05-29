@@ -63,6 +63,14 @@ public class ProjectCacheRepository {
         write(detailKey(projectDetail.id()), projectDetail, detailTtl);
     }
 
+    public void evictProjectDetail(long projectId) {
+        try {
+            redisTemplate.delete(detailKey(projectId));
+        } catch (RuntimeException exception) {
+            log.warn("Failed to evict project detail cache for {}", projectId, exception);
+        }
+    }
+
     private String detailKey(long projectId) {
         return DETAIL_KEY_PATTERN.formatted(projectId);
     }

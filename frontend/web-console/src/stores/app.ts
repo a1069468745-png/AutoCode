@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 
 export const useAppStore = defineStore('app', () => {
   const activeProjectId = ref<string | null>(window.sessionStorage.getItem('autocode.projectId'))
-  const activeProjectName = ref('未选择项目')
+  const activeProjectName = ref(window.sessionStorage.getItem('autocode.projectName') ?? '未选择项目')
   const environment = ref(import.meta.env.MODE)
 
   const headerProjectId = computed(() => activeProjectId.value ?? '')
@@ -15,10 +15,12 @@ export const useAppStore = defineStore('app', () => {
     if (projectId) {
       // Frontend and gateway share this key so every query carries the same project scope.
       window.sessionStorage.setItem('autocode.projectId', projectId)
+      window.sessionStorage.setItem('autocode.projectName', projectName)
       return
     }
 
     window.sessionStorage.removeItem('autocode.projectId')
+    window.sessionStorage.removeItem('autocode.projectName')
   }
 
   return {

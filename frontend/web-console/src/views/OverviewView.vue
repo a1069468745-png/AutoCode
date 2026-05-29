@@ -11,10 +11,11 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 <template>
   <section class="overview-grid">
     <article class="hero-panel">
-      <p class="eyebrow">阶段目标</p>
-      <h2>IT-08 / IT-09 / IT-10 联调推进中</h2>
+      <p class="eyebrow">Verification Target</p>
+      <h2>Project creation and query flow are ready for browser testing.</h2>
       <p class="hero-copy">
-        当前控制台已接入项目管理与查询联调页面，可直接创建项目、切换当前项目并发起多类型查询。
+        Use the left navigation to create a project, mark it as active, and then send natural-language
+        queries to the context endpoints from the query page.
       </p>
       <div class="hero-tags">
         <el-tag effect="plain">Vue 3</el-tag>
@@ -27,15 +28,15 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
     <article class="status-panel">
       <div class="status-item">
-        <span>当前项目</span>
+        <span>Active project</span>
         <strong>{{ activeProjectName }}</strong>
       </div>
       <div class="status-item">
-        <span>运行环境</span>
+        <span>Environment</span>
         <strong>{{ environment }}</strong>
       </div>
       <div class="status-item">
-        <span>API Base</span>
+        <span>API base</span>
         <strong>{{ apiBaseUrl }}</strong>
       </div>
     </article>

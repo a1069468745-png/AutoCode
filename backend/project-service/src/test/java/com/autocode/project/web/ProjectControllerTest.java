@@ -10,7 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -190,6 +194,34 @@ class ProjectControllerTest extends ProjectServiceIntegrationTestBase {
                 .andExpect(jsonPath("$.allowed").value(false));
     }
 
+    @Test
+    void shouldSyncRealIndexesFromWorkspace() throws Exception {
+        Path workspace = createGitWorkspace();
+        long projectId = createProject("autocode-sync-demo");
+
+        mockMvc.perform(post("/api/projects/{id}/sync-indexes", projectId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "workspaceRoot": "%s",
+                                  "maxCommits": 20
+                                }
+                                """.formatted(escapeJson(workspace.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(projectId))
+                .andExpect(jsonPath("$.status").value("READY"))
+                .andExpect(jsonPath("$.symbolCount").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.commitCount").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.documentCount").value(org.hamcrest.Matchers.greaterThan(0)));
+
+        assertThat(jdbcTemplate.queryForObject("select count(*) from app.symbols where project_id = ?", Integer.class, projectId))
+                .isGreaterThan(0);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from app.commits where project_id = ?", Integer.class, projectId))
+                .isGreaterThan(0);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from app.documents where project_id = ?", Integer.class, projectId))
+                .isGreaterThan(0);
+    }
+
     private long createProject(String name) throws Exception {
         String response = mockMvc.perform(post("/api/projects")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -206,5 +238,62 @@ class ProjectControllerTest extends ProjectServiceIntegrationTestBase {
 
         String idText = response.replaceAll("(?s).*\"id\"\\s*:\\s*(\\d+).*", "$1");
         return Long.parseLong(idText);
+    }
+
+    private Path createGitWorkspace() throws Exception {
+        Path workspace = Files.createTempDirectory("autocode-index-sync");
+        Path sourceDir = workspace.resolve(Path.of("src", "main", "java", "demo"));
+        Path docsDir = workspace.resolve(Path.of("docs", "specs"));
+        Files.createDirectories(sourceDir);
+        Files.createDirectories(docsDir);
+        Files.writeString(sourceDir.resolve("ProjectIndexSyncService.java"), """
+                package demo;
+
+                public class ProjectIndexSyncService {
+                    public void syncIndexes() {
+                        persistDocuments();
+                    }
+
+                    private void persistDocuments() {
+                    }
+                }
+                """);
+        Files.writeString(sourceDir.resolve("ProjectIndexRepository.java"), """
+                package demo;
+
+                public class ProjectIndexRepository {
+                }
+                """);
+        Files.writeString(docsDir.resolve("CS-01-sync-index.md"), """
+                # CS-01 Sync Index
+
+                This document links CS-01 with ProjectIndexSyncService and real index sync work.
+                """);
+
+        runCommand(workspace, "git", "init");
+        runCommand(workspace, "git", "config", "user.name", "Codex");
+        runCommand(workspace, "git", "config", "user.email", "codex@example.com");
+        runCommand(workspace, "git", "add", ".");
+        runCommand(workspace, "git", "commit", "-m", "feat: add sync index workspace");
+        return workspace;
+    }
+
+    private void runCommand(Path workdir, String... command) throws Exception {
+        Process process = new ProcessBuilder(command)
+                .directory(workdir.toFile())
+                .redirectErrorStream(true)
+                .start();
+        int exitCode = process.waitFor();
+        if (exitCode != 0) {
+            String output;
+            try (var inputStream = process.getInputStream()) {
+                output = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
+            throw new IllegalStateException("Command failed: " + String.join(" ", command) + System.lineSeparator() + output);
+        }
+    }
+
+    private String escapeJson(String value) {
+        return value.replace("\\", "\\\\");
     }
 }

@@ -11,10 +11,10 @@ type MenuItem = {
 }
 
 const menuItems: MenuItem[] = [
-  { key: 'overview', label: '平台概览', icon: DataLine, routeName: 'overview' },
-  { key: 'projects', label: '项目管理', icon: FolderOpened, routeName: 'projects' },
-  { key: 'queries', label: '查询联调', icon: Link, routeName: 'queries' },
-  { key: 'knowledge', label: '知识回溯', icon: Document },
+  { key: 'overview', label: 'Platform Overview', icon: DataLine, routeName: 'overview' },
+  { key: 'projects', label: 'Project Management', icon: FolderOpened, routeName: 'projects' },
+  { key: 'queries', label: 'Query Playground', icon: Link, routeName: 'queries' },
+  { key: 'knowledge', label: 'Knowledge Trace', icon: Document },
 ]
 
 const router = useRouter()
@@ -36,11 +36,11 @@ function handleMenuSelect(key: string) {
 
 <template>
   <el-container class="app-shell">
-    <el-aside class="shell-aside" width="240px">
+    <el-aside class="shell-aside" width="260px">
       <div class="brand-block">
         <p class="brand-mark">AutoCode</p>
         <h1>Web Console</h1>
-        <span>一期联调</span>
+        <span>Phase 1 integration</span>
       </div>
 
       <el-menu class="shell-menu" :default-active="activeMenu" @select="handleMenuSelect">
@@ -54,10 +54,10 @@ function handleMenuSelect(key: string) {
     <el-container>
       <el-header class="shell-header">
         <div>
-          <p class="header-label">当前阶段</p>
-          <strong>项目与查询联调推进</strong>
+          <p class="header-label">Current Stage</p>
+          <strong>IT-08 / IT-09 / IT-10 visual verification</strong>
         </div>
-        <el-tag type="warning" effect="dark">IT-08 / IT-09 / IT-10</el-tag>
+        <el-tag type="warning" effect="dark">Local browser demo</el-tag>
       </el-header>
 
       <el-main class="shell-main">
@@ -76,7 +76,7 @@ function handleMenuSelect(key: string) {
   color: #f9fafb;
   padding: 28px 20px 20px;
   background:
-    linear-gradient(180deg, rgba(16, 24, 40, 0.95), rgba(31, 41, 55, 0.98)),
+    linear-gradient(180deg, rgba(16, 24, 40, 0.96), rgba(31, 41, 55, 0.98)),
     radial-gradient(circle at top, rgba(251, 191, 36, 0.25), transparent 32%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }

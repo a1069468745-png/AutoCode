@@ -4,6 +4,8 @@ import com.autocode.project.service.ProjectService;
 import com.autocode.project.web.dto.CreateProjectRequest;
 import com.autocode.project.web.dto.CreateProjectResponse;
 import com.autocode.project.web.dto.ProjectDetailResponse;
+import com.autocode.project.web.dto.ProjectIndexSyncRequest;
+import com.autocode.project.web.dto.ProjectIndexSyncResponse;
 import com.autocode.project.web.dto.ProjectSummaryResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,5 +40,11 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ProjectDetailResponse getProject(@PathVariable("id") long id) {
         return projectService.getProject(id);
+    }
+
+    @PostMapping("/{id}/sync-indexes")
+    public ProjectIndexSyncResponse syncIndexes(@PathVariable("id") long id,
+                                                @RequestBody(required = false) ProjectIndexSyncRequest request) {
+        return projectService.syncIndexes(id, request);
     }
 }

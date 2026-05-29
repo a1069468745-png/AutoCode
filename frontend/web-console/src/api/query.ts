@@ -3,7 +3,10 @@ import { http } from '@/api/http'
 export type QueryIntent = 'CODE_LOCATE' | 'HISTORY_TRACE' | 'DOCUMENT_TRACE' | 'CALL_RELATION' | 'REQUIREMENT_ANALYSIS'
 
 export type QueryRequest = {
-  question: string
+  projectId: number
+  queryText: string
+  preferredIntent?: QueryIntent
+  options?: Record<string, unknown>
 }
 
 export type QueryHit = {
@@ -17,9 +20,11 @@ export type QueryHit = {
 
 export type QueryResponse = {
   intent: string
-  confidence: number
-  hits: QueryHit[]
-  generatedAt: string
+  result: {
+    status: string
+    hits: QueryHit[]
+    message: string
+  }
   cacheHit: boolean
   context: Record<string, unknown>
 }
