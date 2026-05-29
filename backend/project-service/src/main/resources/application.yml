@@ -1,6 +1,13 @@
 spring:
   application:
     name: project-service
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 4
+        queue-capacity: 100
+      thread-name-prefix: autocode-index-
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
   datasource:

@@ -3,6 +3,7 @@ package com.autocode.project.service;
 import com.autocode.project.cache.ProjectCacheRepository;
 import com.autocode.project.domain.ProjectRecord;
 import com.autocode.project.domain.ProjectRepository;
+import com.autocode.project.index.IndexOrchestratorService;
 import com.autocode.project.index.ProjectIndexSyncService;
 import com.autocode.project.web.dto.CreateProjectRequest;
 import com.autocode.project.web.dto.CreateProjectResponse;
@@ -21,13 +22,16 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectCacheRepository projectCacheRepository;
     private final ProjectIndexSyncService projectIndexSyncService;
+    private final IndexOrchestratorService indexOrchestratorService;
 
     public ProjectService(ProjectRepository projectRepository,
                           ProjectCacheRepository projectCacheRepository,
-                          ProjectIndexSyncService projectIndexSyncService) {
+                          ProjectIndexSyncService projectIndexSyncService,
+                          IndexOrchestratorService indexOrchestratorService) {
         this.projectRepository = projectRepository;
         this.projectCacheRepository = projectCacheRepository;
         this.projectIndexSyncService = projectIndexSyncService;
+        this.indexOrchestratorService = indexOrchestratorService;
     }
 
     public CreateProjectResponse createProject(CreateProjectRequest request) {
@@ -72,36 +76,18 @@ public class ProjectService {
         ProjectRecord projectRecord = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-        projectRepository.updateStatus(projectId, "INDEXING");
-        projectCacheRepository.evictProjectList();
-        projectCacheRepository.evictProjectDetail(projectId);
+        indexOrchestratorService.triggerAsyncIndexing(
+                projectRecord,
+                request == null ? null : request.workspaceRoot(),
+                request == null ? null : request.maxCommits()
+        );
 
-        try {
-            var summary = projectIndexSyncService.sync(
-                    projectRecord,
-                    request == null ? null : request.workspaceRoot(),
-                    request == null ? null : request.maxCommits()
-            );
-            projectRepository.updateStatus(projectId, "READY");
-            projectCacheRepository.evictProjectList();
-            projectCacheRepository.evictProjectDetail(projectId);
-            return new ProjectIndexSyncResponse(
-                    projectId,
-                    "READY",
-                    summary.workspaceRoot(),
-                    summary.symbolCount(),
-                    summary.edgeCount(),
-                    summary.commitCount(),
-                    summary.documentCount(),
-                    summary.requirementCount(),
-                    summary.linkCount()
-            );
-        } catch (RuntimeException exception) {
-            projectRepository.updateStatus(projectId, "FAILED");
-            projectCacheRepository.evictProjectList();
-            projectCacheRepository.evictProjectDetail(projectId);
-            throw exception;
-        }
+        return new ProjectIndexSyncResponse(
+                projectId,
+                "INDEXING",
+                request != null && request.workspaceRoot() != null ? request.workspaceRoot() : "<auto>",
+                0, 0, 0, 0, 0, 0
+        );
     }
 
     private ProjectSummaryResponse toSummaryResponse(ProjectRecord projectRecord) {
@@ -110,7 +96,8 @@ public class ProjectService {
                 projectRecord.name(),
                 projectRecord.repoUrl(),
                 projectRecord.defaultBranch(),
-                projectRecord.status()
+                projectRecord.status(),
+                projectRecord.indexError()
         );
     }
 
@@ -122,7 +109,8 @@ public class ProjectService {
                 projectRecord.defaultBranch(),
                 projectRecord.languageStack(),
                 projectRecord.docRepoPath(),
-                projectRecord.status()
+                projectRecord.status(),
+                projectRecord.indexError()
         );
     }
 
@@ -135,6 +123,7 @@ public class ProjectService {
                 projectRecord.languageStack(),
                 projectRecord.docRepoPath(),
                 projectRecord.status(),
+                projectRecord.indexError(),
                 projectRecord.createdAt(),
                 projectRecord.updatedAt()
         );

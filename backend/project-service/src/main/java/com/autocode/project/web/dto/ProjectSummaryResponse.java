@@ -5,6 +5,7 @@ public record ProjectSummaryResponse(
         String name,
         String repoUrl,
         String defaultBranch,
-        String status
+        String status,
+        String indexError
 ) {
 }

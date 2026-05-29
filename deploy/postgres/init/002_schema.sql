@@ -6,6 +6,7 @@ create table if not exists app.projects (
     language_stack varchar(256),
     doc_repo_path varchar(512),
     status varchar(32) not null default 'CREATED',
+    index_error text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     constraint uq_projects_name unique (name),

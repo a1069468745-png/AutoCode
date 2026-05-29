@@ -42,16 +42,18 @@ public class ProjectRepository {
                     default_branch,
                     language_stack,
                     doc_repo_path,
-                    status
+                    status,
+                    index_error
                 ) values (
                     :name,
                     :repoUrl,
                     :defaultBranch,
                     :languageStack,
                     :docRepoPath,
-                    :status
+                    :status,
+                    null
                 )
-                returning id, name, repo_url, default_branch, language_stack, doc_repo_path, status, created_at, updated_at
+                returning id, name, repo_url, default_branch, language_stack, doc_repo_path, status, index_error, created_at, updated_at
                 """)
                 .params(params)
                 .query(this::mapRecord)
@@ -60,7 +62,7 @@ public class ProjectRepository {
 
     public List<ProjectRecord> findAll() {
         return jdbcClient.sql("""
-                select id, name, repo_url, default_branch, language_stack, doc_repo_path, status, created_at, updated_at
+                select id, name, repo_url, default_branch, language_stack, doc_repo_path, status, index_error, created_at, updated_at
                 from app.projects
                 order by id desc
                 """)
@@ -70,7 +72,7 @@ public class ProjectRepository {
 
     public Optional<ProjectRecord> findById(long id) {
         return jdbcClient.sql("""
-                select id, name, repo_url, default_branch, language_stack, doc_repo_path, status, created_at, updated_at
+                select id, name, repo_url, default_branch, language_stack, doc_repo_path, status, index_error, created_at, updated_at
                 from app.projects
                 where id = :id
                 """)
@@ -91,6 +93,20 @@ public class ProjectRepository {
                 .update();
     }
 
+    public void updateStatusWithError(long id, String status, String indexError) {
+        jdbcClient.sql("""
+                update app.projects
+                set status = :status,
+                    index_error = :indexError,
+                    updated_at = now()
+                where id = :id
+                """)
+                .param("id", id)
+                .param("status", status)
+                .param("indexError", indexError)
+                .update();
+    }
+
     private ProjectRecord mapRecord(ResultSet resultSet, int rowNum) throws SQLException {
         return new ProjectRecord(
                 resultSet.getLong("id"),
@@ -100,6 +116,7 @@ public class ProjectRepository {
                 resultSet.getString("language_stack"),
                 resultSet.getString("doc_repo_path"),
                 resultSet.getString("status"),
+                resultSet.getString("index_error"),
                 resultSet.getObject("created_at", OffsetDateTime.class).toInstant(),
                 resultSet.getObject("updated_at", OffsetDateTime.class).toInstant()
         );

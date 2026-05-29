@@ -10,6 +10,7 @@ public record ProjectDetailResponse(
         String languageStack,
         String docRepoPath,
         String status,
+        String indexError,
         Instant createdAt,
         Instant updatedAt
 ) {

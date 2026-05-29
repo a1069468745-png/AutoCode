@@ -199,6 +199,7 @@ class ProjectControllerTest extends ProjectServiceIntegrationTestBase {
         Path workspace = createGitWorkspace();
         long projectId = createProject("autocode-sync-demo");
 
+        // Async indexing: the response returns immediately with INDEXING status
         mockMvc.perform(post("/api/projects/{id}/sync-indexes", projectId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -209,10 +210,10 @@ class ProjectControllerTest extends ProjectServiceIntegrationTestBase {
                                 """.formatted(escapeJson(workspace.toString()))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.projectId").value(projectId))
-                .andExpect(jsonPath("$.status").value("READY"))
-                .andExpect(jsonPath("$.symbolCount").value(org.hamcrest.Matchers.greaterThan(0)))
-                .andExpect(jsonPath("$.commitCount").value(org.hamcrest.Matchers.greaterThan(0)))
-                .andExpect(jsonPath("$.documentCount").value(org.hamcrest.Matchers.greaterThan(0)));
+                .andExpect(jsonPath("$.status").value("INDEXING"));
+
+        // Poll until READY or FAILED
+        awaitIndexStatus(projectId, "READY", 30_000);
 
         assertThat(jdbcTemplate.queryForObject("select count(*) from app.symbols where project_id = ?", Integer.class, projectId))
                 .isGreaterThan(0);
@@ -220,6 +221,33 @@ class ProjectControllerTest extends ProjectServiceIntegrationTestBase {
                 .isGreaterThan(0);
         assertThat(jdbcTemplate.queryForObject("select count(*) from app.documents where project_id = ?", Integer.class, projectId))
                 .isGreaterThan(0);
+    }
+
+    private void awaitIndexStatus(long projectId, String expectedStatus, long timeoutMs) throws Exception {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        String status = null;
+        while (System.currentTimeMillis() < deadline) {
+            String response = mockMvc.perform(get("/api/projects/{id}", projectId))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString(StandardCharsets.UTF_8);
+            // Extract status field from JSON response
+            int statusIdx = response.indexOf("\"status\"");
+            if (statusIdx >= 0) {
+                int colonIdx = response.indexOf(":", statusIdx);
+                int startQuote = response.indexOf("\"", colonIdx + 1);
+                int endQuote = response.indexOf("\"", startQuote + 1);
+                if (startQuote >= 0 && endQuote >= 0) {
+                    status = response.substring(startQuote + 1, endQuote);
+                }
+            }
+            if (expectedStatus.equals(status) || "FAILED".equals(status)) {
+                break;
+            }
+            Thread.sleep(500);
+        }
+        assertThat(status).isEqualTo(expectedStatus);
     }
 
     private long createProject(String name) throws Exception {

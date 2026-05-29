@@ -7,6 +7,7 @@ public record CreateProjectResponse(
         String defaultBranch,
         String languageStack,
         String docRepoPath,
-        String status
+        String status,
+        String indexError
 ) {
 }
