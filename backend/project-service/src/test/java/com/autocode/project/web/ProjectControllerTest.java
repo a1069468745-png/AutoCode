@@ -162,6 +162,34 @@ class ProjectControllerTest extends ProjectServiceIntegrationTestBase {
                 .isEqualTo(TEST_REDIS_DATABASE);
     }
 
+    @Test
+    void shouldGrantAndCheckProjectAccessForUser() throws Exception {
+        long projectId = createProject("autocode-perm");
+
+        mockMvc.perform(post("/internal/projects/{projectId}/members/{userId}", projectId, "u1001")
+                        .param("role", "owner"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.projectId").value(projectId))
+                .andExpect(jsonPath("$.userId").value("u1001"))
+                .andExpect(jsonPath("$.role").value("OWNER"))
+                .andExpect(jsonPath("$.allowed").value(true));
+
+        mockMvc.perform(get("/internal/projects/{projectId}/members/{userId}/access", projectId, "u1001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("OWNER"))
+                .andExpect(jsonPath("$.allowed").value(true));
+    }
+
+    @Test
+    void shouldDenyAccessWhenUserNotBoundToProject() throws Exception {
+        long projectId = createProject("autocode-no-access");
+
+        mockMvc.perform(get("/internal/projects/{projectId}/members/{userId}/access", projectId, "u404"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("NONE"))
+                .andExpect(jsonPath("$.allowed").value(false));
+    }
+
     private long createProject(String name) throws Exception {
         String response = mockMvc.perform(post("/api/projects")
                         .contentType(MediaType.APPLICATION_JSON)
