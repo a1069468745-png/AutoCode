@@ -15,11 +15,14 @@ public class GatewaySecurityConfig {
 
     private final GatewayAuthenticationEntryPoint authenticationEntryPoint;
     private final DevBearerAuthenticationFilter devBearerAuthenticationFilter;
+    private final ProjectPermissionFilter projectPermissionFilter;
 
     public GatewaySecurityConfig(GatewayAuthenticationEntryPoint authenticationEntryPoint,
-                                 DevBearerAuthenticationFilter devBearerAuthenticationFilter) {
+                                 DevBearerAuthenticationFilter devBearerAuthenticationFilter,
+                                 ProjectPermissionFilter projectPermissionFilter) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.devBearerAuthenticationFilter = devBearerAuthenticationFilter;
+        this.projectPermissionFilter = projectPermissionFilter;
     }
 
     @Bean
@@ -35,7 +38,8 @@ public class GatewaySecurityConfig {
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                .addFilterBefore(devBearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(devBearerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(projectPermissionFilter, DevBearerAuthenticationFilter.class);
 
         return http.build();
     }
