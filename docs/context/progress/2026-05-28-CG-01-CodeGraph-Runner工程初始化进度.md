@@ -26,6 +26,6 @@
 
 - `mvn -pl codegraph-runner -am test`：通过
 
-## 当前结论
+## 归档说明
 
 `CG-01` 已完成，当前仓库已具备 CodeGraph Runner 的最小可用工程入口和受控工作目录准备基线，可以按顺序进入 `HI-01` History Indexer 工程初始化。

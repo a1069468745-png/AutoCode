@@ -24,4 +24,7 @@ logging:
     root: ${ROOT_LOG_LEVEL:INFO}
     com.autocode: ${APP_LOG_LEVEL:INFO}
 autocode:
-  docs-root: ${DOCS_ROOT:./docs}
+  knowledge:
+    docs-root: ${DOCS_ROOT:./docs}
+    markdown-extensions: ${DOC_MARKDOWN_EXTENSIONS:.md,.mdx}
+    frontmatter-delimiter: ${DOC_FRONTMATTER_DELIMITER:---}

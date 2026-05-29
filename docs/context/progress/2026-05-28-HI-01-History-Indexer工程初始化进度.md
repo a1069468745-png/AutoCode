@@ -29,6 +29,6 @@
 
 - `mvn -pl history-indexer -am test`：通过
 
-## 当前结论
+## 归档说明
 
 `HI-01` 已完成，当前仓库已具备 History Indexer 的最小可用工程入口、最小扫描范围约束和受控 Git 工作区准备基线，可以按顺序进入 `KI-01` Knowledge Indexer 工程初始化。

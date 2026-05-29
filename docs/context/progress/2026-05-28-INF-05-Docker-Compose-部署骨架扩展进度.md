@@ -15,8 +15,7 @@
 - `D:\project\AutoCode\backend` 下 `mvn -q -DskipTests package` 通过
 - `D:\project\AutoCode\frontend\web-console` 下 `pnpm.cmd build` 通过
 
-## 当前结论
+## 归档说明
 
 - `INF-05` 已完成
-- 一期 MVP 基础设施与工程骨架阶段已闭合
-- 当前可严格按顺序进入 `DB-01` 核心表结构设计与初始化脚本
+- 本文档仅保留部署骨架扩展事实，后续阶段切换以 `docs/context/current/` 为准

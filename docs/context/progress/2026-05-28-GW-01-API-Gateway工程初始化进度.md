@@ -6,10 +6,9 @@
 
 ## 2. 已完成内容
 
-- 新增 `GW-01` 设计文档：
-  - `docs/superpowers/specs/2026-05-28-gw-01-api-gateway-design.md`
 - 新增 `GW-01` 执行计划：
   - `docs/plans/execution/15-GW-01-API-Gateway工程初始化计划.md`
+- 已将设计方案收口到正式执行计划与实现变更
 - 补齐 `api-gateway` 模块依赖：
   - `spring-boot-starter-web`
   - `spring-boot-starter-security`
@@ -41,13 +40,6 @@
 - `mvn -q -DskipTests package`
   - 通过
 
-其中测试过程先经历两次有效红灯：
+## 4. 归档说明
 
-- 第一次暴露模块测试命令未带 `-am` 时依赖 `common` 无法解析
-- 第二次暴露 `api-gateway` 尚未具备 `@SpringBootConfiguration`
-
-在补齐测试基础设施和最小生产实现后，模块测试已转绿。
-
-## 4. 当前结论
-
-`GW-01` 已完成，当前仓库已具备正式的网关服务入口和安全占位链路，可以严格按顺序进入 `PS-01` Project Service 工程初始化。
+`GW-01` 已完成。本文档仅保留网关工程初始化事实与验证结论，详细调试过程不再作为长期进度主内容保留，后续任务顺位以 `docs/context/current/` 为准。
