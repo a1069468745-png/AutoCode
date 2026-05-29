@@ -33,6 +33,18 @@ public class ContextQueryController {
         return ApiResponse.ok("query executed", queryOrchestrationService.execute(request, QueryIntent.DOCUMENT_TRACE));
     }
 
+    @PostMapping("/impact")
+    public ApiResponse<QueryResponsePayload> impact(@RequestBody ContextQueryRequest request) {
+        // Impact analysis entry routes to call-relation intent for CS-06 call-chain style queries.
+        return ApiResponse.ok("query executed", queryOrchestrationService.execute(request, QueryIntent.CALL_RELATION));
+    }
+
+    @PostMapping("/traceability")
+    public ApiResponse<QueryResponsePayload> traceability(@RequestBody ContextQueryRequest request) {
+        // Traceability entry routes to requirement-analysis intent for CS-07 requirement/code backtracking.
+        return ApiResponse.ok("query executed", queryOrchestrationService.execute(request, QueryIntent.REQUIREMENT_ANALYSIS));
+    }
+
     @PostMapping("/ask")
     public ApiResponse<QueryResponsePayload> ask(@RequestBody ContextQueryRequest request) {
         // Generic ask route delegates intent detection to QueryIntentResolver.
